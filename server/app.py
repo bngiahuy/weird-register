@@ -7,18 +7,18 @@ from database import init_db, get_db
 from utils import hash_password, verify_password
 
 app = FastAPI()
-init_db()  # Khởi tạo database khi app chạy
+init_db()  # Initialize database when app starts
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-# --- Đăng ký ---
+# --- Register ---
 @app.post("/register")
 async def register(request: Request):
     data = await request.json()
@@ -27,17 +27,17 @@ async def register(request: Request):
 
     if not email or not password:
         return JSONResponse(
-            {"message": "Email và mật khẩu là bắt buộc"},
+            {"message": "Email and password are required"},
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
-    db = next(get_db())  # Lấy session DB
+    db = next(get_db())  # Get DB session
 
-    # Kiểm tra email đã tồn tại chưa
+    # Check if email already exists
     existing_user_email = db.query(User).filter(User.email == email).first()
     if existing_user_email:
         return JSONResponse(
-            {"message": "Email này đã được sử dụng"},
+            {"message": "This email is already in use"},
             status_code=status.HTTP_409_CONFLICT,
         )
 
@@ -46,15 +46,15 @@ async def register(request: Request):
     existing_user_password = (
         db.query(User).filter(User.password_hash == hashed_password).first()
     )
-    
+
     if existing_user_password:
         return JSONResponse(
             {
-                "message": f"Đây là password của {existing_user_password.email}. Hãy đổi password khác đi!"
+                "message": f"This is the password of {existing_user_password.email}. Please choose a different password!"
             },
             status_code=status.HTTP_409_CONFLICT,
         )
-    # --- Kết thúc logic kiểm tra mật khẩu duy nhất ---
+    # --- End unique password check logic ---
 
     new_user = User(email=email, password_hash=hashed_password)
 
@@ -63,18 +63,18 @@ async def register(request: Request):
         db.commit()
         db.refresh(new_user)
         return JSONResponse(
-            {"message": "Đăng ký thành công!", "user_id": new_user.id},
+            {"message": "Registration successful!", "user_id": new_user.id},
             status_code=status.HTTP_201_CREATED,
         )
     except IntegrityError:
         db.rollback()
         return JSONResponse(
-            {"message": "Có lỗi xảy ra khi đăng ký"},
+            {"message": "An error occurred during registration"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
 
-# --- Đăng nhập ---
+# --- Login ---
 @app.post("/login")
 async def login(request: Request):
     data = await request.json()
@@ -83,7 +83,7 @@ async def login(request: Request):
 
     if not email or not password:
         return JSONResponse(
-            {"message": "Email và mật khẩu là bắt buộc"},
+            {"message": "Email and password are required"},
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -92,12 +92,12 @@ async def login(request: Request):
 
     if not user or not verify_password(password, str(user.password_hash)):
         return JSONResponse(
-            {"message": "Email hoặc mật khẩu không đúng"},
+            {"message": "Incorrect email or password"},
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
 
-    # Ở đây bạn có thể tạo JWT token và trả về cho client
+    # Here you can create a JWT token and return it to the client
     return JSONResponse(
-        {"message": "Đăng nhập thành công!", "user_id": user.id},
+        {"message": "Login successful!", "user_id": user.id},
         status_code=status.HTTP_200_OK,
     )

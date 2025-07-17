@@ -7,12 +7,12 @@ document
 		const errorDiv = document.getElementById('error-message');
 		let error = '';
 
-		// Kiểm tra định dạng email
+		// Check if email and password are provided
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 		if (!emailRegex.test(email)) {
-			error = 'Email không hợp lệ.';
+			error = 'Invalid email format.';
 		} else if (password.length < 6) {
-			error = 'Mật khẩu phải có ít nhất 6 ký tự.';
+			error = 'Password must be at least 6 characters long.';
 		}
 
 		if (error) {
@@ -29,12 +29,12 @@ document
 			})
 				.then((response) => response.json())
 				.then((data) => {
-					errorDiv.textContent = data.message || 'Không có dữ liệu trả về.';
+					errorDiv.textContent = data.message || 'No response data.';
 					errorDiv.style.display = 'block';
 				})
 				.catch((err) => {
                     console.error('Error:', err);
-					errorDiv.textContent = 'Đã xảy ra lỗi kết nối.';
+					errorDiv.textContent = 'Connection error occurred.';
 					errorDiv.style.display = 'block';
 				});
 		}
